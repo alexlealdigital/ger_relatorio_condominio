@@ -1,0 +1,12 @@
+# Deploy do frontend estático no Netlify
+# Base do site: pasta frontend/ (sem build — HTML/CSS/JS puros)
+
+[build]
+  publish = "frontend"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

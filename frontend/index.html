@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor Financeiro de Condomínios</title>
+  <meta name="description" content="Gere apresentações premium de previsão orçamentária de condomínios a partir de qualquer planilha Excel.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0A1F44">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css?v=7">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">GC</span>
+        <div class="brand-text">
+          <strong>Gestor Financeiro de Condomínios</strong>
+          <span>Previsão orçamentária em apresentação premium</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="server-status" id="serverStatus">
+          <span class="dot" id="serverDot"></span>
+          <span id="serverLabel">Conectando…</span>
+        </div>
+        <button class="btn-ghost" id="btnSair" hidden>Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════ TELA DE LOGIN ══════════ -->
+  <main class="wrap login-wrap" id="telaLogin" hidden>
+    <section class="card login-card">
+      <h2>Acesso restrito</h2>
+      <p class="hint">Entre com o e-mail e a senha fornecidos pela administração.</p>
+      <div class="fields fields-login">
+        <label>
+          E-mail
+          <input type="email" id="loginEmail" placeholder="voce@empresa.com.br" autocomplete="username">
+        </label>
+        <label>
+          Senha
+          <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password">
+        </label>
+      </div>
+      <button class="btn btn-primary" id="btnEntrar">Entrar</button>
+      <p class="feedback" id="feedbackLogin"></p>
+    </section>
+  </main>
+
+  <!-- ══════════ APLICAÇÃO ══════════ -->
+  <main class="wrap" id="telaApp" hidden>
+
+    <!-- PASSO 1 · Dados opcionais -->
+    <section class="card">
+      <div class="step-head">
+        <span class="step-num">1</span>
+        <div>
+          <h2>Dados da apresentação</h2>
+          <p class="hint">Todos os campos são opcionais. O que não for preenchido é detectado na planilha.</p>
+        </div>
+      </div>
+      <div class="fields">
+        <label>
+          Nome do condomínio
+          <input type="text" id="nomeCondominio" placeholder="Ex.: Residencial Jardim das Flores" autocomplete="off">
+        </label>
+        <label>
+          Data da assembleia
+          <input type="text" id="dataAssembleia" placeholder="dd/mm/aaaa" inputmode="numeric" autocomplete="off">
+        </label>
+        <label>
+          Logo da administradora (opcional)
+          <input type="file" id="logoInput" accept=".png,.jpg,.jpeg">
+        </label>
+        <label class="campo-largo">
+          Texto do edital de convocação (opcional — vira slide legível na apresentação)
+          <textarea id="editalTexto" rows="5" placeholder="Cole aqui o texto do edital. Ex.: O Síndico do CONDOMÍNIO..., inscrito no CNPJ..., convoca todos os condôminos para a ASSEMBLEIA GERAL ORDINÁRIA..."></textarea>
+        </label>
+      </div>
+    </section>
+
+    <!-- PASSO 2 · Planilha -->
+    <section class="card">
+      <div class="step-head">
+        <span class="step-num">2</span>
+        <div>
+          <h2>Planilha de previsão orçamentária</h2>
+          <p class="hint">Export "BalAnual" do Condomínio21 ou o <a class="link-modelo" href="modelo_previsao_orcamentaria.xlsx" download>modelo padrão preenchido</a> (.xls/.xlsx). Máx. 10 MB.</p>
+        </div>
+      </div>
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Selecionar planilha Excel">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 16V4m0 0-4 4m4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <p id="dropText"><strong>Clique para selecionar</strong> ou arraste a planilha aqui</p>
+        <p class="file-name" id="fileName"></p>
+      </div>
+      <input type="file" id="fileInput" accept=".xls,.xlsx" hidden>
+      <button class="btn btn-primary" id="btnAnalisar" disabled>Analisar dados financeiros</button>
+      <p class="feedback" id="feedbackAnalise"></p>
+    </section>
+
+    <!-- PASSO 3 · Resultado + geração -->
+    <section class="card" id="resultado" hidden>
+      <div class="step-head">
+        <span class="step-num">3</span>
+        <div>
+          <h2 id="tituloResultado">Análise concluída</h2>
+          <p class="hint" id="subtituloResultado"></p>
+        </div>
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="taxa-card" id="taxaCard"></div>
+
+      <h3 class="grupos-title">Grupos de despesa detectados</h3>
+      <div class="grupos" id="grupos"></div>
+
+      <button class="btn btn-green" id="btnGerar">Gerar apresentação PowerPoint</button>
+      <p class="feedback" id="feedbackPpt"></p>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section class="card" id="secHistorico" hidden>
+      <div class="step-head">
+        <span class="step-num">≡</span>
+        <div>
+          <h2>Relatórios anteriores</h2>
+          <p class="hint">Últimas apresentações geradas nesta conta.</p>
+        </div>
+      </div>
+      <div class="historico" id="historico"></div>
+    </section>
+
+  </main>
+
+  <footer class="wrap footer">
+    Gestor Financeiro de Condomínios v3 · Web
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="app.js?v=7"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then((reg) => reg.update());
+    }
+  </script>
+</body>
+</html>

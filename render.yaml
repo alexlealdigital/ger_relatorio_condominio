@@ -1,0 +1,19 @@
+# Blueprint do Render — backend Flask
+# No painel do Render: New > Blueprint > apontar para este repositório
+services:
+  - type: web
+    name: gestor-condominio-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: CORS_ORIGINS
+        value: "*"   # após o deploy do Netlify, troque para https://SEUSITE.netlify.app
+      - key: SUPABASE_URL
+        sync: false  # preencha no painel: https://SEU-PROJETO.supabase.co
+      - key: SUPABASE_ANON_KEY
+        sync: false  # preencha no painel: chave publishable (sb_publishable_...)

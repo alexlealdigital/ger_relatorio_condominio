@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Builds desktop (PyInstaller) — não versionar binários
+build/
+dist/
+*.exe
+*.spec
+GestorCondominio
+
+# Ambiente / segredos
+.env
+.env.*
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Node (caso adicione tooling futuramente)
+node_modules/
