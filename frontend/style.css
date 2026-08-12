@@ -286,3 +286,11 @@ main { padding: 32px 0 8px; display: flex; flex-direction: column; gap: 20px; }
 }
 .btn-baixar:hover:not(:disabled) { background: var(--accent-hi); }
 .btn-baixar:disabled { opacity: .5; cursor: wait; }
+
+/* segundo botão de geração (PDF) */
+.btn-pdf { margin-top: 10px; }
+
+/* links do card de acesso */
+.auth-links { margin-top: 14px; font-size: 13px; color: var(--muted); text-align: center; }
+.auth-links a { color: var(--accent-hi); font-weight: 600; text-decoration: none; }
+.auth-links a:hover { text-decoration: underline; }

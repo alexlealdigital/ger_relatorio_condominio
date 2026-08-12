@@ -68,6 +68,97 @@ function aplicarSessao(s) {
 sb.auth.getSession().then(({ data }) => aplicarSessao(data.session));
 sb.auth.onAuthStateChange((_evento, s) => aplicarSessao(s));
 
+/* ─── Troca de vistas do card de acesso ──────────────────────────── */
+const vistas = ['vistaLogin', 'vistaCadastro', 'vistaEsqueci', 'vistaNovaSenha'];
+function mostrarVista(id) {
+  vistas.forEach((v) => { $(v).hidden = v !== id; });
+  fbLogin.textContent = '';
+}
+$('linkCriarConta').addEventListener('click', (e) => { e.preventDefault(); mostrarVista('vistaCadastro'); });
+$('linkEsqueci').addEventListener('click', (e) => { e.preventDefault(); mostrarVista('vistaEsqueci'); });
+document.querySelectorAll('.linkVoltar').forEach((l) =>
+  l.addEventListener('click', (e) => { e.preventDefault(); mostrarVista('vistaLogin'); }));
+
+/* ─── Criar conta (exige chave corporativa) ──────────────────────── */
+$('btnCadastrar').addEventListener('click', async () => {
+  const email = $('cadEmail').value.trim();
+  const senha = $('cadSenha').value;
+  const chave = $('cadChave').value.trim().toUpperCase();
+  if (!email || senha.length < 8 || !chave) {
+    fbLogin.className = 'feedback err';
+    fbLogin.textContent = 'Preencha e-mail, senha (mín. 8 caracteres) e a chave corporativa.';
+    return;
+  }
+  $('btnCadastrar').disabled = true;
+  fbLogin.className = 'feedback wait';
+  fbLogin.textContent = 'Criando conta…';
+  const { error } = await sb.auth.signUp({
+    email, password: senha,
+    options: { data: { chave_corporativa: chave } },
+  });
+  $('btnCadastrar').disabled = false;
+  if (error) {
+    fbLogin.className = 'feedback err';
+    fbLogin.textContent = /chave/i.test(error.message)
+      ? 'Chave de acesso corporativa inválida ou expirada.'
+      : (/already/i.test(error.message)
+          ? 'Este e-mail já possui conta. Use "Esqueci a senha" se necessário.'
+          : 'Não foi possível criar a conta. Verifique os dados.');
+  } else {
+    fbLogin.className = 'feedback ok';
+    fbLogin.textContent = 'Conta criada com sucesso!';
+  }
+});
+
+/* ─── Esqueci a senha ────────────────────────────────────────────── */
+$('btnRecuperar').addEventListener('click', async () => {
+  const email = $('recEmail').value.trim();
+  if (!email) {
+    fbLogin.className = 'feedback err';
+    fbLogin.textContent = 'Informe o e-mail.';
+    return;
+  }
+  $('btnRecuperar').disabled = true;
+  fbLogin.className = 'feedback wait';
+  fbLogin.textContent = 'Enviando link…';
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname,
+  });
+  $('btnRecuperar').disabled = false;
+  fbLogin.className = error ? 'feedback err' : 'feedback ok';
+  fbLogin.textContent = error
+    ? 'Não foi possível enviar. Tente novamente em alguns minutos.'
+    : 'Link enviado! Confira sua caixa de entrada (e o spam).';
+});
+
+/* ─── Nova senha (após clicar no link do e-mail) ─────────────────── */
+sb.auth.onAuthStateChange((evento) => {
+  if (evento === 'PASSWORD_RECOVERY') {
+    telaLogin.hidden = false;
+    telaApp.hidden = true;
+    mostrarVista('vistaNovaSenha');
+  }
+});
+$('btnSalvarSenha').addEventListener('click', async () => {
+  const senha = $('novaSenha').value;
+  if (senha.length < 8) {
+    fbLogin.className = 'feedback err';
+    fbLogin.textContent = 'A nova senha precisa de pelo menos 8 caracteres.';
+    return;
+  }
+  $('btnSalvarSenha').disabled = true;
+  const { error } = await sb.auth.updateUser({ password: senha });
+  $('btnSalvarSenha').disabled = false;
+  if (error) {
+    fbLogin.className = 'feedback err';
+    fbLogin.textContent = 'Não foi possível salvar. Peça um novo link de recuperação.';
+  } else {
+    fbLogin.className = 'feedback ok';
+    fbLogin.textContent = 'Senha atualizada!';
+    mostrarVista('vistaLogin');
+  }
+});
+
 btnEntrar.addEventListener('click', async () => {
   const email = $('loginEmail').value.trim();
   const senha = $('loginSenha').value;
@@ -272,14 +363,15 @@ function renderResultado(a) {
 }
 
 /* ─── Passo 3 → Gerar PPTX ───────────────────────────────────────────── */
-btnGerar.addEventListener('click', async () => {
+async function gerarDocumento(rota, btn) {
+
   if (!arquivoSelecionado) return;
-  btnGerar.disabled = true;
+  btn.disabled = true;
   fbPpt.className = 'feedback wait';
   fbPpt.textContent = 'Gerando apresentação… Isso leva alguns segundos.';
 
   try {
-    const res = await fetch(`${API_URL}/api/gerar-pptx`, {
+    const res = await fetch(`${API_URL}${rota}`, {
       method: 'POST',
       headers: headersAuth(),
       body: montarFormData(),
@@ -289,7 +381,7 @@ btnGerar.addEventListener('click', async () => {
     // Nome do arquivo vindo do header Content-Disposition (com fallback)
     const cd = res.headers.get('Content-Disposition') || '';
     const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
-    const nomeArquivo = match ? decodeURIComponent(match[1]) : 'Relatorio_Condominio.pptx';
+    const nomeArquivo = match ? decodeURIComponent(match[1]) : 'Relatorio_Condominio';
 
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -308,9 +400,12 @@ btnGerar.addEventListener('click', async () => {
     fbPpt.className = 'feedback err';
     fbPpt.textContent = err.message || 'Falha ao gerar a apresentação.';
   } finally {
-    btnGerar.disabled = false;
+    btn.disabled = false;
   }
-});
+}
+
+btnGerar.addEventListener('click', () => gerarDocumento('/api/gerar-pptx', btnGerar));
+$('btnGerarPdf').addEventListener('click', () => gerarDocumento('/api/gerar-pdf', $('btnGerarPdf')));
 
 /* ─── Histórico (leitura direta do Supabase — RLS protege) ───────────── */
 async function carregarHistorico() {

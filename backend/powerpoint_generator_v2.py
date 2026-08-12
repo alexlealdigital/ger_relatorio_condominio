@@ -164,15 +164,17 @@ class PowerPointGenerator:
     def _titulo(self, slide, texto, sub=None, dark=False):
         self._logo_canto(slide)
         cor = WHITE if dark else NAVY
-        self._text(slide, Inches(0.6), Inches(0.42), Inches(12.1), Inches(0.7),
+        # título deixa folga à direita para a logo
+        self._text(slide, Inches(0.6), Inches(0.42), Inches(10.4), Inches(0.7),
                    texto, size=30, color=cor, bold=True)
         if sub:
-            self._text(slide, Inches(0.6), Inches(1.06), Inches(12.1),
+            self._text(slide, Inches(0.6), Inches(1.06), Inches(10.4),
                        Inches(0.36), sub, size=14,
                        color=MUTED_ICE if dark else MUTED)
 
-    def _logo(self, slide, x, y, altura):
-        """Insere a logo (se fornecida) preservando a proporção."""
+    def _logo(self, slide, x, y, altura, direita=False):
+        """Insere a logo (se fornecida) preservando a proporção.
+        Com direita=True, alinha ao canto direito (x vira a margem)."""
         path = self.extras.get('logo_path')
         if not path:
             return
@@ -180,26 +182,29 @@ class PowerPointGenerator:
             from PIL import Image as _Img
             with _Img.open(path) as im:
                 prop = im.width / im.height
-            slide.shapes.add_picture(path, x, y, height=altura,
-                                     width=Emu(int(altura * prop)))
+            larg = Emu(int(altura * prop))
+            px = (SLIDE_W - larg - x) if direita else x
+            slide.shapes.add_picture(path, px, y, height=altura, width=larg)
         except Exception:
             pass
 
     def _logo_canto(self, slide):
-        """Logo pequena no canto superior direito dos slides de conteúdo."""
+        """Logo no canto superior DIREITO dos slides de conteúdo (padrão
+        do cliente)."""
         path = self.extras.get('logo_path')
         if not path:
-            return
+            return 0
         try:
             from PIL import Image as _Img
             with _Img.open(path) as im:
                 prop = im.width / im.height
-            alt = Inches(0.58)
+            alt = Inches(0.8)
             larg = Emu(int(alt * prop))
-            slide.shapes.add_picture(path, SLIDE_W - larg - Inches(0.5),
-                                     Inches(0.45), height=alt, width=larg)
+            slide.shapes.add_picture(path, SLIDE_W - larg - Inches(0.6),
+                                     Inches(0.38), height=alt, width=larg)
+            return 0
         except Exception:
-            pass
+            return 0
 
     def _rodape(self, slide, dark=False):
         nome = self.r.get('nome_condominio') or 'PREVISÃO ORÇAMENTÁRIA'
@@ -816,7 +821,7 @@ class PowerPointGenerator:
         taxa = self.r.get('taxa_ideal_mensal')
         ano = self.r.get('ano_proximo') or ''
         fracoes = (self.b.get('fracoes') or []) if self.b else []
-        self._logo(s, Inches(0.9), Inches(0.62), altura=Inches(1.0))
+        self._logo(s, Inches(0.6), Inches(0.55), altura=Inches(1.15), direita=True)
         self._text(s, Inches(0.9), Inches(1.9), Inches(11.5), Inches(0.5),
                    'PROPOSTA PARA APROVAÇÃO EM ASSEMBLEIA', size=15,
                    color=BLUE, bold=True)

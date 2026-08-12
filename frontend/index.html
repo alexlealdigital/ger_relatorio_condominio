@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#0A1F44">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
@@ -38,19 +38,77 @@
   <!-- ══════════ TELA DE LOGIN ══════════ -->
   <main class="wrap login-wrap" id="telaLogin" hidden>
     <section class="card login-card">
-      <h2>Acesso restrito</h2>
-      <p class="hint">Entre com o e-mail e a senha fornecidos pela administração.</p>
-      <div class="fields fields-login">
-        <label>
-          E-mail
-          <input type="email" id="loginEmail" placeholder="voce@empresa.com.br" autocomplete="username">
-        </label>
-        <label>
-          Senha
-          <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password">
-        </label>
+
+      <!-- ENTRAR -->
+      <div id="vistaLogin">
+        <h2>Acesso restrito</h2>
+        <p class="hint">Entre com seu e-mail e senha corporativos.</p>
+        <div class="fields fields-login">
+          <label>
+            E-mail
+            <input type="email" id="loginEmail" placeholder="voce@empresa.com.br" autocomplete="username">
+          </label>
+          <label>
+            Senha
+            <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password">
+          </label>
+        </div>
+        <button class="btn btn-primary" id="btnEntrar">Entrar</button>
+        <p class="auth-links">
+          <a href="#" id="linkCriarConta">Criar conta</a> · 
+          <a href="#" id="linkEsqueci">Esqueci a senha</a>
+        </p>
       </div>
-      <button class="btn btn-primary" id="btnEntrar">Entrar</button>
+
+      <!-- CRIAR CONTA -->
+      <div id="vistaCadastro" hidden>
+        <h2>Criar conta</h2>
+        <p class="hint">O cadastro requer a chave de acesso corporativa fornecida pela sua empresa.</p>
+        <div class="fields fields-login">
+          <label>
+            E-mail
+            <input type="email" id="cadEmail" placeholder="voce@empresa.com.br" autocomplete="username">
+          </label>
+          <label>
+            Senha (mínimo 8 caracteres)
+            <input type="password" id="cadSenha" placeholder="••••••••" autocomplete="new-password">
+          </label>
+          <label>
+            Chave de acesso corporativa
+            <input type="text" id="cadChave" placeholder="SUPORT-XXXX-XXXX-XXXX-XXXX" autocomplete="off">
+          </label>
+        </div>
+        <button class="btn btn-primary" id="btnCadastrar">Criar conta</button>
+        <p class="auth-links"><a href="#" class="linkVoltar">← Voltar ao login</a></p>
+      </div>
+
+      <!-- ESQUECI A SENHA -->
+      <div id="vistaEsqueci" hidden>
+        <h2>Recuperar senha</h2>
+        <p class="hint">Informe seu e-mail — enviaremos um link para redefinir a senha.</p>
+        <div class="fields fields-login">
+          <label>
+            E-mail
+            <input type="email" id="recEmail" placeholder="voce@empresa.com.br" autocomplete="username">
+          </label>
+        </div>
+        <button class="btn btn-primary" id="btnRecuperar">Enviar link de recuperação</button>
+        <p class="auth-links"><a href="#" class="linkVoltar">← Voltar ao login</a></p>
+      </div>
+
+      <!-- NOVA SENHA (chega pelo link do e-mail) -->
+      <div id="vistaNovaSenha" hidden>
+        <h2>Definir nova senha</h2>
+        <p class="hint">Digite a nova senha para a sua conta.</p>
+        <div class="fields fields-login">
+          <label>
+            Nova senha (mínimo 8 caracteres)
+            <input type="password" id="novaSenha" placeholder="••••••••" autocomplete="new-password">
+          </label>
+        </div>
+        <button class="btn btn-primary" id="btnSalvarSenha">Salvar nova senha</button>
+      </div>
+
       <p class="feedback" id="feedbackLogin"></p>
     </section>
   </main>
@@ -127,6 +185,7 @@
       <div class="grupos" id="grupos"></div>
 
       <button class="btn btn-green" id="btnGerar">Gerar apresentação PowerPoint</button>
+      <button class="btn btn-green btn-pdf" id="btnGerarPdf">Gerar apresentação PDF</button>
       <p class="feedback" id="feedbackPpt"></p>
     </section>
 
@@ -149,7 +208,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=9"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then((reg) => reg.update());

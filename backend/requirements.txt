@@ -11,3 +11,4 @@ pillow>=9.0.0
 lxml>=4.9.0
 requests>=2.31.0
 PyMuPDF>=1.24.0
+reportlab>=4.0.0

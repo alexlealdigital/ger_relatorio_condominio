@@ -36,6 +36,7 @@ from flask_cors import CORS
 
 from condominio_app_v2 import CondominiumFinancialAnalyzer
 from powerpoint_generator_v2 import PowerPointGenerator
+from pdf_generator import PDFGenerator
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
@@ -290,9 +291,19 @@ def analisar():
     return jsonify({'ok': True, 'analise': resumo})
 
 
+@app.route('/api/gerar-pdf', methods=['POST'])
+@requer_auth
+def gerar_pdf():
+    return _gerar_documento('pdf')
+
+
 @app.route('/api/gerar-pptx', methods=['POST'])
 @requer_auth
 def gerar_pptx():
+    return _gerar_documento('pptx')
+
+
+def _gerar_documento(formato: str):
     analyzer, erro = _rodar_analise(request)
     if erro:
         payload, status = erro
@@ -355,12 +366,16 @@ def gerar_pptx():
             except Exception as e:
                 print(f'⚠  Edital PDF não processado: {e}')
     buffer = BytesIO()
-    gen = PowerPointGenerator(analyzer, output_path=buffer, extras=extras)
-    gen.generate()
+    if formato == 'pdf':
+        PDFGenerator(analyzer, buffer, extras=extras).generate()
+    else:
+        PowerPointGenerator(analyzer, output_path=buffer,
+                            extras=extras).generate()
     buffer.seek(0)
 
+    ext = 'pdf' if formato == 'pdf' else 'pptx'
     nome_arquivo = _slug_filename(analyzer.analysis_results.get('nome_condominio', ''))
-    nome_arquivo += f"_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pptx"
+    nome_arquivo += f"_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
 
     # Sobe o PPTX ao Storage para permitir download pelo histórico
     # (usa o token do usuário — RLS por pasta {user_id}/...)
@@ -374,7 +389,8 @@ def gerar_pptx():
                 headers={
                     'Authorization': f'Bearer {g.user_token}',
                     'apikey': SUPABASE_ANON_KEY,
-                    'Content-Type': ('application/vnd.openxmlformats-'
+                    'Content-Type': ('application/pdf' if formato == 'pdf'
+                                     else 'application/vnd.openxmlformats-'
                                      'officedocument.presentationml.presentation'),
                     'x-upsert': 'true',
                 },
@@ -401,7 +417,9 @@ def gerar_pptx():
         buffer,
         as_attachment=True,
         download_name=nome_arquivo,
-        mimetype='application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        mimetype=('application/pdf' if formato == 'pdf' else
+                  'application/vnd.openxmlformats-officedocument.'
+                  'presentationml.presentation')
     )
 
 

@@ -2,8 +2,8 @@
    Estratégia: NETWORK-FIRST. A rede é sempre consultada primeiro;
    o cache serve apenas como fallback offline. Isso evita o problema
    clássico de PWA servir versões antigas do app. */
-const CACHE = 'gestor-cond-v7';
-const ESTATICOS = ['./', './index.html', './style.css?v=7', './app.js?v=7',
+const CACHE = 'gestor-cond-v9';
+const ESTATICOS = ['./', './index.html', './style.css?v=9', './app.js?v=9',
                    './manifest.json', './icon-192.png'];
 
 self.addEventListener('install', (e) => {
